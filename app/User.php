@@ -59,12 +59,18 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'role_id' => $this->role_id
+        ];
     }
 
 
     public function sessions() {
         return $this->hasMany('App\Session');
+    }
+
+    public function role() {
+        return $this->belongsTo('App\Role');
     }
 
 

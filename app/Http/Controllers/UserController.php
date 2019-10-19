@@ -42,22 +42,25 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'section_id' => auth('api')->user()->section_id,
-            'role_id'    => $request->role_id
+            'section_id' => auth('api')->user()->section_id
         ]);
 
         return response()->json([
-            'data' => [
-                'message' => 'Created user successfully.',
-                'id'      => $user->id
-            ]
+            'message' => 'Created user successfully.',
+            'id'      => $user->id
         ], 201);
     }
 
     public function login(LoginRequest $request) {
-        if (! $token = auth('api')->attempt($request->all())) {
+        $role_id = User::where('email', $request->email)->get()->first();
+        if (!$role_id) {
             return response()->json([
-                'message' => ['Incorrect email or password.']
+                'message' => 'Incorrect email.'
+            ], 422);
+        }
+        if (! $token = auth('api')->attempt($request->all() + ['role_id' => $role_id])) {
+            return response()->json([
+                'message' => 'Incorrect password.'
             ], 422);
         }
         Session::create([
@@ -84,7 +87,7 @@ class UserController extends Controller
         auth('api')->logout();
         return response()->json([
             'message' => 'Successfully logged out'
-        ]);
+        ], 200);
     }
 
     public function update($id) {

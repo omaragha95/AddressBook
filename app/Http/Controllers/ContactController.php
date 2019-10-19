@@ -7,14 +7,12 @@ use App\Http\Requests\StoreContactRequest;
 use Illuminate\Support\Facades\DB;
 
 use App\Contact;
-use App\Locked;
 
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Client;
 
 class ContactController extends Controller
 {
-    public static $locked = 0;
     public function index() {
         if (!auth('api')->use() || auth('api')->user()->role_id == 3) {
             return response()->json([
@@ -23,6 +21,7 @@ class ContactController extends Controller
         }
         $contacts = Contact::all();
         return response()->json([
+            'message'  => 'success',
             'contacts' => $contacts
         ], 200);
     }
@@ -77,67 +76,6 @@ class ContactController extends Controller
 
     public function update($id) {
 
-        if (ContactController::$locked == 1) {
-            return response()->json([
-                'message' => 'This contact is locked by another transaction.'
-            ], 422);
-        }
-
-        $contact = Contact::find($id);
-
-        if (!$id) {
-            return response()->json([
-                'message' => 'Contact NOT found.'
-            ], 404);
-        }
-
-        if (!auth('api')->user() || (auth('api')->user()->role_id != 1 && auth('api')->user()->id != 
-        $contact->user_id)) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-
-        $contact = Contact::find($id);
-
-        $locked = Locked::find($contact->id);
-
-        if ($locked) {
-            return response()->json([
-                'message' => 'this record is locked by another transaction.'
-            ], 422);
-        }
-
-        Locked::create([
-            'record_id' => $contact->id
-        ]);
-
-        $message = '';
-        $status = 200;
-        sleep(10);
-
-        // DB::beginTransaction();
-
-        // try {
-        //     $contact->first_name = request('first_name');
-        //     $contact->last_name = request('last_name');
-        //     $contact->mobile = request('mobile');
-        //     $contact->address = request('address');
-        //     $contact->save();
-        //     $message = 'Contact updated successfully.';
-        //     $status = 200;
-        //     sleep(20);
-        //     DB::commit();
-        // } catch (\Exception $e) {
-        //     DB::rollback();
-        //     $status = 500;
-        //     $message = 'Internal error.';
-        // }
-        // Locked::where('record_id', $contact->id)->delete();
-        ContactController::$locked = 0;
-        return response()->json([
-            'message' => $message
-        ], $status);
     }
 
 
@@ -157,10 +95,6 @@ class ContactController extends Controller
         return response()->json([
             'message' => 'Contact deleted successfully.'
         ], 200);
-    }
-
-    public function test() {
-        return 'omar';
     }
 
 

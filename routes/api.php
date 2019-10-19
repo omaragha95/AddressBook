@@ -60,7 +60,6 @@ Route::post('add-contact', 'ContactController@create');
 Route::put('update/contact/{id}', 'ContactController@update');
 Route::delete('delete/contact/{id}', 'ContactController@delete');
 
-Route::get('test', 'ContactController@test');
 
 
 
