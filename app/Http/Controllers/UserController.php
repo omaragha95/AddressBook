@@ -37,13 +37,16 @@ class UserController extends Controller
                 ]
             ], 422);
         }
-
-        $user = User::create([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'section_id' => auth('api')->user()->section_id
-        ]);
+            'section_id' => $request->section_id
+        ];
+        if ($request->role_id) {
+            $data['role_id'] = $request->role_id;
+        }
+        $user = User::create($data);
 
         return response()->json([
             'message' => 'Created user successfully.',
@@ -126,7 +129,14 @@ class UserController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
-        User::find($id)->delete();
+        if (auth('api')->user()->id == $id) {
+            return response()->json([
+                'message' => 'You can not delete your self.'
+            ], 401);
+        }
+        $user = User::find($id);
+        $user->contacts()->delete();
+        $user->delete();
         return response()->json([
             'message' => 'User deleted successfully.'
         ], 200);
