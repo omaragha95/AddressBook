@@ -16,6 +16,15 @@ class Contact extends Model
     ];
 
 
+    public function section() {
+        return $this->belongsTo('App\Section');
+    }
+
+    public function user() {
+        return $this->belongsTo('App\User');
+    }
+
+
     public function order() {
         return $this->hasOne('App\Order');
     }

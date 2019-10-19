@@ -64,6 +64,9 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
+    public function contacts() {
+        return $this->hasMany('App\Contact');
+    }
 
     public function sessions() {
         return $this->hasMany('App\Session');
@@ -71,6 +74,10 @@ class User extends Authenticatable implements JWTSubject
 
     public function role() {
         return $this->belongsTo('App\Role');
+    }
+
+    public function section() {
+        return $this->belongsTo('App\Section');
     }
 
 

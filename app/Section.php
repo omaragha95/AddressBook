@@ -7,4 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Section extends Model
 {
     protected $fillable = ['name'];
+
+
+    public function cotnacts() {
+        return $this->hasMany('App\Contact');
+    }
+
+    public function users() {
+        return $this->hasMany('App\User');
+    }
+
 }
