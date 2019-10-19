@@ -25,7 +25,7 @@ class ContactController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
-        $contacts = Contact::all();
+        $contacts = Contact::where('status', 'accepted')->get();
         return response()->json([
             'message'  => 'success',
             'contacts' => $contacts
@@ -33,7 +33,12 @@ class ContactController extends Controller
     }
 
     public function indexBySection($id) {
-        if (!auth('api')->user() || auth('api')->user()->role_id == 3) {
+        if (!auth('api')->user()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        if (auth('api')->user()->role_id == 3 && auht('api')->user()->section_id != $id) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
@@ -117,7 +122,6 @@ class ContactController extends Controller
         foreach($orders as $order) {
             $contact = Contact::find($order->contact_id);
             $user = User::find($contact->user_id);
-            return $contact;
             $ordr = [
                 'id'         => $order->id,
                 'name'       => $user->name,
