@@ -41,6 +41,9 @@ use App\Http\Requests\LoginRequest;
 Route::get('users', 'UserController@index');
 Route::delete('delete/user/{id}', 'UserController@delete');
 
+Route::get('orders', 'ContactController@getAllOrders');
+Route::get('change-status/{id}', 'ContactController@changeStatus');
+
 
 
 // user operations
@@ -66,3 +69,4 @@ Route::delete('delete/contact/{id}', 'ContactController@delete');
 
 
 
+Route::get('test', 'ContactController@test');

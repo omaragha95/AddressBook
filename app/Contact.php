@@ -14,4 +14,9 @@ class Contact extends Model
         'user_id',
         'section_id'
     ];
+
+
+    public function order() {
+        return $this->hasOne('App\Order');
+    }
 }
