@@ -39,11 +39,11 @@ use App\Http\Requests\LoginRequest;
 Route::get('sections', 'SectionController@index');
 
 // admin operation
+Route::get('log', 'UserController@getLog');
 Route::get('users', 'UserController@index');
 Route::delete('user/{id}', 'UserController@delete');
 Route::get('orders', 'ContactController@getAllOrders');
 Route::get('contact/{id}', 'ContactController@changeStatus');
-
 
 
 // user operations

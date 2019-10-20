@@ -17,6 +17,7 @@ use App\Contact;
 use App\Order;
 use App\User;
 use App\Section;
+use App\Log;
 
 class ContactController extends Controller
 {
@@ -35,12 +36,21 @@ class ContactController extends Controller
         } else {
             $sections = Section::all();
         }
+
         foreach($sections as $section) {
             $contacts = $section->contacts()->where('status', 'accepted')->get();
             array_push($data, [
                 $section->name => $contacts
             ]);
         }
+
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'get all sections and thier contacts.',
+            'table'  => 'contacts and section',
+            'role'   => auth('api')->user()->role->name
+        ]);
 
         return response()->json([
             'message'  => 'success',
@@ -58,15 +68,28 @@ class ContactController extends Controller
 
         $contact = Contact::create($request->all() + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
 
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'Add new Contact.',
+            'table'  => 'contacts',
+            'role'   => auth('api')->user()->role->name            
+        ]);
+
         // sending email for normal user.
         if (auth('api')->user()->role_id == 3) {
             $admin = User::where('role_id', '<', 3)->limit(1)->get()->first();
             // swap 'omaragha9595@gmail.com' with $admin->email;
             Mail::to('omaragha9595@gmail.com')->send(new MyMail('Query Add Contact', auth('api')->user()->email, auth('api')->user()->name, $request->first_name, $request->last_name, $request->mobile, $request->address));
-            Order::create(['contact_id' => $contact->id]);
+            Order::create(['contact_id' => $contact->id, 'user_id' => $admin->id]);
+            Log::create([
+                'name' => auth('api')->user()->name,
+                'email' => auth('api')->user()->email,
+                'action' => 'Add new order.',
+                'table'  => 'orders',
+                'role'   => auth('api')->user()->role->name            
+            ]);    
         }
-
-
         return response()->json([
             'message' => 'Contact created successfully.',
             'id'      => $contact->id
@@ -74,6 +97,15 @@ class ContactController extends Controller
     }
 
     public function update($id) {
+
+
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'updating contact.',
+            'table'  => 'contacts',
+            'role'   => auth('api')->user()->role->name
+        ]);
     }
 
 
@@ -84,12 +116,23 @@ class ContactController extends Controller
                 'message' => 'Contact NOT found!'
             ], 422);
         }
+
         if (!auth('api')->user() || (auth('api')->user()->role_id != 1 && auth('api')->user()->id != $contact->user_id)) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
+
         $contact->delete();
+
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'deleting contact.',
+            'table'  => 'contacts',
+            'role'   => auth('api')->user()->role->name
+        ]);
+
         return response()->json([
             'message' => 'Contact deleted successfully.'
         ], 200);
@@ -102,8 +145,11 @@ class ContactController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
-        $orders = Order::all();
+
+        // $orders = Order::all();
+        $orders = auth('api')->user()->orders;
         $data = [];
+
         foreach($orders as $order) {
             $contact = Contact::find($order->contact_id);
             $user = User::find($contact->user_id);
@@ -119,6 +165,13 @@ class ContactController extends Controller
             ];
             array_push($data, $ordr);
         }
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'getting all orders.',
+            'table'  => 'orders',
+            'role'   => auth('api')->user()->role->name
+        ]);
         return response()->json([
             'message' => 'success',
             'orders'  => $data
@@ -141,6 +194,13 @@ class ContactController extends Controller
             $contact->status = request('status');
             $contact->save();
         }
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'changing status contact.',
+            'table'  => 'contacts',
+            'role'   => auth('api')->user()->role->name
+        ]);
         return response()->json([
             'message' => 'Status changed successfully.'
         ], 200);
@@ -178,6 +238,13 @@ class ContactController extends Controller
 
         Contact::create($joinedContact + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
 
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'joining muliple contacts.',
+            'table'  => 'contacts',
+            'role'   => auth('api')->user()->role->name
+        ]);
 
         return response()->json([
             'message' => 'Mergin contacts successfully.'

@@ -13,6 +13,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 use App\User;
 use App\Session;
+use App\Log;
 
 class UserController extends Controller
 {
@@ -35,6 +36,14 @@ class UserController extends Controller
             ];
             array_push($data, $us);
         }
+
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'getting all users.',
+            'table'  => 'users',
+            'role'   => auth('api')->user()->role->name
+        ]);
 
         return response()->json([
             'message' => 'success',
@@ -68,6 +77,14 @@ class UserController extends Controller
 
         $user = User::create($data);
 
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'adding new user.',
+            'table'  => 'users',
+            'role'   => auth('api')->user()->role->name
+        ]);
+
         return response()->json([
             'message' => 'Created user successfully.',
             'id'      => $user->id
@@ -90,6 +107,15 @@ class UserController extends Controller
             'token' => $token,
             'user_id' => auth('api')->user()->id
         ]);
+        
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'loggin in.',
+            'table'  => 'users',
+            'role'   => auth('api')->user()->role->name
+        ]);
+
         return response()->json([
             'message' => 'Successfully logged in.',
             'token'   => $token
@@ -105,7 +131,17 @@ class UserController extends Controller
 
         Session::where('token', substr(request()->header('Authorization'), 7))->delete();
 
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'loggin out.',
+            'table'  => 'users',
+            'role'   => auth('api')->user()->role->name
+        ]);
+
         auth('api')->logout();
+        
+
 
         return response()->json([
             'message' => 'Successfully logged out'
@@ -153,6 +189,15 @@ class UserController extends Controller
 
         $user->save();
         
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'updating user.',
+            'table'  => 'users',
+            'role'   => auth('api')->user()->role->name
+        ]);
+
+
         return response()->json([
             'message' => 'Update user successfylly.'
         ], 200);
@@ -175,9 +220,26 @@ class UserController extends Controller
         $user->contacts()->delete();
         $user->sessions()->delete();
         $user->delete();
+        Log::create([
+            'name' => auth('api')->user()->name,
+            'email' => auth('api')->user()->email,
+            'action' => 'deleting user.',
+            'table'  => 'users',
+            'role'   => auth('api')->user()->role->name
+        ]);
+
         return response()->json([
             'message' => 'User deleted successfully.'
         ], 200);
+    }
+
+    public function getLog() {
+        if (!auth('api')->user() || auth('api')->user()->role_id != 1) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        return response()->json(Log::all());
     }
 
 }
