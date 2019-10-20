@@ -36,32 +36,31 @@ use App\Http\Requests\LoginRequest;
 
 // });
 
+Route::get('sections', 'SectionController@index');
 
 // admin operation
 Route::get('users', 'UserController@index');
-Route::delete('delete/user/{id}', 'UserController@delete');
-
+Route::delete('user/{id}', 'UserController@delete');
 Route::get('orders', 'ContactController@getAllOrders');
-Route::get('change-status/{id}', 'ContactController@changeStatus');
+Route::get('contact/{id}', 'ContactController@changeStatus');
 
 
 
 // user operations
-Route::post('register', 'UserController@register');
+Route::post('users', 'UserController@create');
 Route::post('login', 'UserController@login');
 Route::post('logout', 'UserController@logout');
-Route::put('update/{id}', 'UserController@update');
+Route::put('user/{id}', 'UserController@update');
 
 
 
 
 // Contact operation
 Route::get('contacts', 'ContactController@index');
-Route::get('section/{id}/contacts', 'ContactController@indexBySection');
-Route::get('my-contacts', 'ContactController@myContacts');
-Route::post('add-contact', 'ContactController@create');
-Route::put('update/contact/{id}', 'ContactController@update');
-Route::delete('delete/contact/{id}', 'ContactController@delete');
+Route::post('join', 'ContactController@join');
+Route::post('contacts', 'ContactController@create');
+Route::put('contact/{id}', 'ContactController@update');
+Route::delete('contact/{id}', 'ContactController@delete');
 
 
 
@@ -69,4 +68,6 @@ Route::delete('delete/contact/{id}', 'ContactController@delete');
 
 
 
-Route::get('test', 'ContactController@test');
+Route::get('test', function () {
+    return view('welcome');
+});

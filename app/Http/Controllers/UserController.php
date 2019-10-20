@@ -22,30 +22,50 @@ class UserController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
+
         $users = User::all();
+
+        $data = [];
+        
+        foreach($users as $user) {
+            $us = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'section' => $user->section->name
+            ];
+            array_push($data, $us);
+        }
+
         return response()->json([
             'message' => 'success',
-            'users' => $users
+            'data' => $data
         ], 200);
     }
 
-    public function register(RegisterRequest $request) {
+    public function create(RegisterRequest $request) {
+        if (!auth('api')->user() || auth('api')->user()->role_id != 1) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
         if ($request->password != $request->confirmPassword) {
             return response()->json([
-                'errors' => [
-                    'message' => ['Password must be matched!']
-                ]
+                'message' => 'Passwords must be matched!'
             ], 422);
         }
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'section_id' => $request->section_id
         ];
+
         if ($request->role_id) {
             $data['role_id'] = $request->role_id;
         }
+
         $user = User::create($data);
 
         return response()->json([
@@ -79,15 +99,14 @@ class UserController extends Controller
     public function logout() {
         if (!auth('api')->user()) {
             return response()->json([
-                'errors' => [
-                    'message' => [
-                        'Unauthorized'
-                    ]
-                ]
+                'message' => 'Unauthorized'
             ], 401);
         }
+
         Session::where('token', substr(request()->header('Authorization'), 7))->delete();
+
         auth('api')->logout();
+
         return response()->json([
             'message' => 'Successfully logged out'
         ], 200);
@@ -100,22 +119,40 @@ class UserController extends Controller
             ], 401);
         }
 
-        $token = Session::where('token',substr(request()->header('Authorization'), 7))->get();
+        $token = Session::where('token',substr(request()->header('Authorization'), 7))->get()->first();
 
-        if (!count($token)) {
+        if (!$token) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
 
         $user = User::find($id);
-        $user->name = request('name');
-        $user->email = request('email');
-        $user->password = bcrypt(request('password'));
+
+        if (request('name')) {
+            $user->name = request('name');
+        }
+        if (request('email')) {
+            $user->email = request('email');
+        }
+        if (request('password')) {
+            $user->password = bcrypt(request('password'));
+        }
+        if (request('role_id')) {
+            $user->role_id = request('role_id');
+        }
+        if (request('section_id')) {
+            $user->section_id = request('section_id');
+        }
+        
+        $token = auth('api')->attempt(['email' => request('email'), 'password' => request('password'), 'role_id' => $user->role_id]);
+        
+        if (!$token) {
+            $user->sessions()->delete();
+        }
+
         $user->save();
-
-        $user->sessions()->delete();
-
+        
         return response()->json([
             'message' => 'Update user successfylly.'
         ], 200);
@@ -136,12 +173,11 @@ class UserController extends Controller
         }
         $user = User::find($id);
         $user->contacts()->delete();
+        $user->sessions()->delete();
         $user->delete();
         return response()->json([
             'message' => 'User deleted successfully.'
         ], 200);
     }
-
-
 
 }

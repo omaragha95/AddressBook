@@ -9,7 +9,7 @@ class Section extends Model
     protected $fillable = ['name'];
 
 
-    public function cotnacts() {
+    public function contacts() {
         return $this->hasMany('App\Contact');
     }
 

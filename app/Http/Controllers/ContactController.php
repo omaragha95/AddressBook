@@ -16,53 +16,37 @@ use App\Mail\MyMail;
 use App\Contact;
 use App\Order;
 use App\User;
+use App\Section;
 
 class ContactController extends Controller
 {
     public function index() {
-        if (!auth('api')->use() || auth('api')->user()->role_id == 3) {
+        if (!auth('api')->user()) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
-        $contacts = Contact::where('status', 'accepted')->get();
+
+        $sections;
+        $data = [];
+
+        if (auth('api')->user()->role_id == 3) {
+            $sections = [Section::find(auth('api')->user()->section_id)];
+        } else {
+            $sections = Section::all();
+        }
+        foreach($sections as $section) {
+            $contacts = $section->contacts()->where('status', 'accepted')->get();
+            array_push($data, [
+                $section->name => $contacts
+            ]);
+        }
+
         return response()->json([
             'message'  => 'success',
-            'contacts' => $contacts
+            'data' => $data
         ], 200);
     }
-
-    public function indexBySection($id) {
-        if (!auth('api')->user()) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-        if (auth('api')->user()->role_id == 3 && auht('api')->user()->section_id != $id) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-        $contacts = Contact::where('section_id', $id)->where('status', 'accepted')->get();
-        return response()->json([
-            'message' => 'success',
-            'contacts' => $contacts
-        ], 200);
-    }
-
-    public function myContacts() {
-        if (!auth('api')->user()) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-        $contacts = Contact::where('user_id', auth('api')->user()->id)->where('status', 'accepted')->get();
-        return response()->json([
-            'message' => 'success',
-            'contacts' => $contacts
-        ], 200);
-    }
-
 
 
     public function create(StoreContactRequest $request) {
@@ -72,14 +56,16 @@ class ContactController extends Controller
             ], 401);
         }
 
+        $contact = Contact::create($request->all() + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
+
         // sending email for normal user.
         if (auth('api')->user()->role_id == 3) {
-            $admin = User::where('role_id', 2)->limit(1)->get()->first();
-            // return $admin;
-            Mail::to($admin)->send(new MyMail('Query Add Contact', auth('api')->user()->email, auth('api')->user()->name, $request->first_name, $request->last_name, $request->mobile, $request->address));
+            $admin = User::where('role_id', '<', 3)->limit(1)->get()->first();
+            // swap 'omaragha9595@gmail.com' with $admin->email;
+            Mail::to('omaragha9595@gmail.com')->send(new MyMail('Query Add Contact', auth('api')->user()->email, auth('api')->user()->name, $request->first_name, $request->last_name, $request->mobile, $request->address));
+            Order::create(['contact_id' => $contact->id]);
         }
 
-        $contact = Contact::create($request->all() + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
 
         return response()->json([
             'message' => 'Contact created successfully.',
@@ -88,7 +74,6 @@ class ContactController extends Controller
     }
 
     public function update($id) {
-
     }
 
 
@@ -159,6 +144,45 @@ class ContactController extends Controller
         return response()->json([
             'message' => 'Status changed successfully.'
         ], 200);
+    }
+
+    public function join(Request $request) {
+
+        if (!auth('api')->user()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $ids = $request->ids;
+        $joinedContact = $request->contact;
+
+        if (auth('api')->user()->role_id != 1) {
+            foreach($ids as $id) {
+                $contact = auth('api')->user()->contacts()
+                           ->where('id', $id)->where('user_id', auth('api')->user()->id)
+                           ->get()->first();
+                if (!$contact) {
+                    return response()->json([
+                        'message' => 'Unauthorized'
+                    ], 401);
+                }
+            }
+        }
+
+        foreach($ids as $id) {
+            $contact = Contact::find($id);
+            $contact->order()->delete();
+            $contact->delete();
+        }
+
+        Contact::create($joinedContact + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
+
+
+        return response()->json([
+            'message' => 'Mergin contacts successfully.'
+        ], 200);
+
     }
 
 
