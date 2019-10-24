@@ -1,0 +1,19 @@
+{
+    "Auth":{
+        "login":"Login",
+        "register":"register"
+    },
+    "Menu":{
+        "dashboard":"Dashboard",
+        "management":"Management",
+        "users":"Users",
+        "privileges":"Privileges",
+        "roles":"Roles",
+        "products":"Products",
+        "categories":"Categories",
+        "log":"Log",
+        "orders":"Orders",
+        "sections":"Sections",
+        "contacts":"contacts"
+    }
+}

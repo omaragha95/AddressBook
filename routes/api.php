@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\LoginRequest;
+
+use Illuminate\Support\Facades\View;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -36,6 +38,8 @@ use App\Http\Requests\LoginRequest;
 
 // });
 
+
+
 Route::get('sections', 'SectionController@index');
 
 // admin operation
@@ -57,7 +61,7 @@ Route::put('user/{id}', 'UserController@update');
 
 // Contact operation
 Route::get('contacts', 'ContactController@index');
-Route::post('join', 'ContactController@join');
+Route::post('merge', 'ContactController@join');
 Route::post('contacts', 'ContactController@create');
 Route::put('contact/{id}', 'ContactController@update');
 Route::delete('contact/{id}', 'ContactController@delete');
@@ -67,7 +71,12 @@ Route::delete('contact/{id}', 'ContactController@delete');
 
 
 
-
 Route::get('test', function () {
-    return view('welcome');
+    return view('test');
 });
+
+Route::get('get', 'ContactController@get');
+
+
+Route::get('omar', 'ContactController@get');
+

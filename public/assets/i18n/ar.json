@@ -1,0 +1,15 @@
+{
+    "Auth":{
+        "login":"تسجيل الدخول",
+        "register":"انشاء حساب"
+    },
+    "Menu":{
+        "dashboard":"لوحة التحكم ",
+        "management":"الإدارة",
+        "users":"المستخدمين",
+        "privileges":"الخصائص",
+        "roles":"الأدوار",
+        "products":"المنتجات",
+        "categories":"التصنيات"
+    }
+}
