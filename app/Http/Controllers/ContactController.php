@@ -47,7 +47,7 @@ class ContactController extends Controller
         }
 
         foreach($sections as $section) {
-            $contacts = $section->contacts()->where('status', 'accepted')->get();
+            $contacts = $section->contacts()->where('status', 'pending')->get();
             array_push($data, [
                 'section' => $section->name, 'contacts' => $contacts
             ]);
@@ -106,19 +106,44 @@ class ContactController extends Controller
     }
 
     public function update($id) {
-        $this->middleware('transaction');
+
+        if (!auth('api')->user()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $contact = Contact::find($id);
+
+        if (auth('api')->user()->role_id == 3 && auth('api')->user()->id != $contact->user_id) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        if (ContactController::$status) {
+            return response()->json([
+                'message' => 'You can not update this contact because updating by another user.'
+            ], 422);
+        }
+        
+        ContactController::$status = 1;
+
+        DB::beginTransaction();
 
         try {
-            sleep(10);
+            $contact = Contact::find($id);
+            $contact->first_name = request('first_name');
+            $contact->last_name = request('last_name');
+            $contact->mobile = request('mobile');
+            $contact->address = request('address');
+            $contact->save();
             DB::commit();
         } catch (\Excerption $e) {
             DB::rollback();
         }
 
         ContactController::$status = 0;
-        return response()->json([
-            'message' => 'updated contact successfully.'
-        ], 200);
 
         Log::create([
             'name' => auth('api')->user()->name,
@@ -127,6 +152,10 @@ class ContactController extends Controller
             'table'  => 'contacts',
             'role'   => auth('api')->user()->role->name
         ]);
+
+        return response()->json([
+            'message' => 'updated contact successfully.'
+        ], 200);
     }
 
 
@@ -135,7 +164,7 @@ class ContactController extends Controller
         if (!$contact) {
             return response()->json([
                 'message' => 'Contact NOT found!'
-            ], 422);
+            ], 404);
         }
 
         if (!auth('api')->user() || (auth('api')->user()->role_id != 1 && auth('api')->user()->id != $contact->user_id)) {
@@ -143,6 +172,8 @@ class ContactController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
+
+        $contact->order()->delete();
 
         $contact->delete();
 
@@ -209,6 +240,13 @@ class ContactController extends Controller
         Order::where('contact_id', $id)->delete();
 
         $contact = Contact::find($id);
+
+        if (!$contact) {
+            return response()->json([
+                'message' => 'Contact NOT found!'
+            ], 404);
+        }
+
         if (request('status') == 'rejected') {
             $contact->delete();            
         } else {
@@ -227,6 +265,8 @@ class ContactController extends Controller
         ], 200);
     }
 
+
+    // lock for any updating operation.
     public function join(Request $request) {
 
         if (!auth('api')->user()) {
@@ -271,13 +311,6 @@ class ContactController extends Controller
             'message' => 'Mergin contacts successfully.'
         ], 200);
 
-    }
-
-    public function get() {
-        $client = new Client();
-        $request = $client->get('http://localhost:8000/omar');
-        $response = $request->getBody();
-        dd($response);
     }
 
 }

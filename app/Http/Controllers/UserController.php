@@ -120,7 +120,7 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Successfully logged in.',
             'token'   => $token,
-            'role_id' => $role_id
+            'role_id' => $role_id->id
         ], 200);
     }
 
