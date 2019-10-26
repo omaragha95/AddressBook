@@ -22,7 +22,7 @@ use App\Log;
 class ContactController extends Controller
 {
 
-    public static $status = 0;
+    public static $process = [];
 
     public function __construct() {
         $this->middleware('transaction', ['only' => [
@@ -121,13 +121,13 @@ class ContactController extends Controller
             ], 401);
         }
 
-        if (ContactController::$status) {
+        if (in_array($id, ContactController::$process)) {
             return response()->json([
                 'message' => 'You can not update this contact because updating by another user.'
             ], 422);
         }
         
-        ContactController::$status = 1;
+        array_push(ContactController::$process, $id);
 
         DB::beginTransaction();
 
@@ -143,7 +143,11 @@ class ContactController extends Controller
             DB::rollback();
         }
 
-        ContactController::$status = 0;
+        $index = array_search($id, $process);
+        if ($index) {
+            unset($process[$index]);
+            array_values($process);
+        }
 
         Log::create([
             'name' => auth('api')->user()->name,
@@ -288,28 +292,52 @@ class ContactController extends Controller
                         'message' => 'Unauthorized'
                     ], 401);
                 }
+                if (in_array($id, ContactCotnroller::$process)) {
+                    return response()->json([
+                        'message' => 'You can not update this contact, because it is updating by another user.'
+                    ], 422);
+                }
             }
         }
 
         foreach($ids as $id) {
-            $contact = Contact::find($id);
-            $contact->order()->delete();
-            $contact->delete();
+            array_push(ContactController::$process, $id);
         }
 
-        Contact::create($joinedContact + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
+        DB::beginTransaction();
+        
+        try {
+            foreach($ids as $id) {
+                $contact = Contact::find($id);
+                $contact->order()->delete();
+                $contact->delete();
+            }
+    
+            Contact::create($joinedContact + ['user_id' => auth('api')->user()->id, 'section_id' => auth('api')->user()->section_id]);
+            
+            unset(ContactController::$process);
+            ContactController::$process = [];
 
-        Log::create([
-            'name' => auth('api')->user()->name,
-            'email' => auth('api')->user()->email,
-            'action' => 'joining muliple contacts.',
-            'table'  => 'contacts',
-            'role'   => auth('api')->user()->role->name
-        ]);
+            DB::commit();
 
-        return response()->json([
-            'message' => 'Mergin contacts successfully.'
-        ], 200);
+            Log::create([
+                'name' => auth('api')->user()->name,
+                'email' => auth('api')->user()->email,
+                'action' => 'joining muliple contacts.',
+                'table'  => 'contacts',
+                'role'   => auth('api')->user()->role->name
+            ]);
+    
+    
+            return response()->json([
+                'message' => 'Mergin contacts successfully.'
+            ], 200);
+        } catch(\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'message' => 'Internal error.'
+            ], 500);
+        }
 
     }
 

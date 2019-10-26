@@ -18,6 +18,11 @@ use App\Log;
 class UserController extends Controller
 {
     public function index() {
+        // request()->headers->set('Authorization', 'Bearer ' . request()->header('Authorization'));
+        // return request()->header('Authorization');
+        // return response()->json([
+        //     'token' => auth('api')->user()
+        // ], 200);
         if (!auth('api')->user() || auth('api')->user()->role_id != 1) {
             return response()->json([
                 'message' => 'Unauthorized'
@@ -93,13 +98,13 @@ class UserController extends Controller
     }
 
     public function login(LoginRequest $request) {
-        $role_id = User::where('email', $request->email)->get()->first();
-        if (!$role_id) {
+        $user = User::where('email', $request->email)->get()->first();
+        if (!$user) {
             return response()->json([
                 'message' => 'Incorrect email.'
             ], 422);
         }
-        if (! $token = auth('api')->attempt($request->all() + ['role_id' => $role_id])) {
+        if (! $token = 'Bearer ' . auth('api')->attempt($request->all() + ['role_id' => $user->role_id])) {
             return response()->json([
                 'message' => 'Incorrect password.'
             ], 422);
@@ -120,7 +125,7 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Successfully logged in.',
             'token'   => $token,
-            'role_id' => $role_id->id
+            'role_id' => $user->role_id
         ], 200);
     }
 

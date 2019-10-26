@@ -75,8 +75,10 @@ Route::get('test', function () {
     return view('test');
 });
 
-Route::get('get', 'ContactController@get');
-
-
-Route::get('omar', 'ContactController@get');
-
+Route::get('omar', function () {
+    $array = [1, 4, 5, 7];
+    $index = array_search(7, $array);
+    unset($array[$index]);
+    $array = array_values($array);
+    return response()->json($array);
+});
