@@ -14,6 +14,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use App\User;
 use App\Session;
 use App\Log;
+use App\Section;
 
 class UserController extends Controller
 {
@@ -57,7 +58,9 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function create(RegisterRequest $request) {
+
+    public function create(Request $request) {
+        return $request->all();
         if (!auth('api')->user() || auth('api')->user()->role_id != 1) {
             return response()->json([
                 'message' => 'Unauthorized'
@@ -96,7 +99,7 @@ class UserController extends Controller
             'id'      => $user->id
         ], 201);
     }
-
+    
     public function login(LoginRequest $request) {
         $user = User::where('email', $request->email)->get()->first();
         if (!$user) {
@@ -104,6 +107,12 @@ class UserController extends Controller
                 'message' => 'Incorrect email.'
             ], 422);
         }
+        // $temp = $request->header('Authorization');
+        // $str = '';
+
+        // if (count(explode(' ', $temp) == 1)) {
+        //     $str = 'Bearer ';
+        // }
         if (! $token = 'Bearer ' . auth('api')->attempt($request->all() + ['role_id' => $user->role_id])) {
             return response()->json([
                 'message' => 'Incorrect password.'
@@ -154,8 +163,24 @@ class UserController extends Controller
         ], 200);
     }
 
+    public function edit($id) {
+        if (!auth('api')->user() || (auth('api')->user()->role_id != 1 && auth('api')->user()->id != $id)) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        $user = User::find($id);
+        $section = Section::find($user->section_id);
+        $user->section = $section;
+        return response()->json([
+            'data' => $user
+        ], 200);
+    }
+
+
     public function update($id) {
-        if (!auth('api')->user() || auth('api')->user()->id != $id) {
+        // return request()->all();
+        if (!auth('api')->user() || (auth('api')->user()->role_id != 1 && auth('api')->user()->id != $id)) {
             return response()->json([
                 'messagae' => 'Unauthorized'
             ], 401);
@@ -174,7 +199,7 @@ class UserController extends Controller
         if (request('name')) {
             $user->name = request('name');
         }
-        if (request('email')) {
+        if (request('email') && request('email') != $user->email) {
             $user->email = request('email');
         }
         if (request('password')) {

@@ -42,43 +42,37 @@ use Illuminate\Support\Facades\View;
 
 Route::get('sections', 'SectionController@index');
 
+Route::get('sections/contacts', 'ContactController@index');
+
+
 // admin operation
 Route::get('log', 'UserController@getLog');
 Route::get('users', 'UserController@index');
-Route::delete('user/{id}', 'UserController@delete');
+Route::delete('users/{id}', 'UserController@delete');
 Route::get('orders', 'ContactController@getAllOrders');
-Route::get('contact/{id}', 'ContactController@changeStatus');
+Route::get('contacts/{id}', 'ContactController@changeStatus');
+Route::get('users/{id}', 'UserController@edit');
 
 
 // user operations
 Route::post('users', 'UserController@create');
 Route::post('login', 'UserController@login');
-Route::post('logout', 'UserController@logout');
-Route::put('user/{id}', 'UserController@update');
+Route::get('logout', 'UserController@logout');
+Route::put('users/{id}', 'UserController@update');
 
 
 
 
 // Contact operation
-Route::get('contacts', 'ContactController@index');
+Route::get('contacts/{id}', 'ContactController@edit');
+Route::get('contacts', 'ContactController@myContacts');
 Route::post('merge', 'ContactController@join');
 Route::post('contacts', 'ContactController@create');
-Route::put('contact/{id}', 'ContactController@update');
-Route::delete('contact/{id}', 'ContactController@delete');
+Route::put('contacts/{id}', 'ContactController@update');
+Route::delete('contacts/{id}', 'ContactController@delete');
 
 
 
 
 
 
-Route::get('test', function () {
-    return view('test');
-});
-
-Route::get('omar', function () {
-    $array = [1, 4, 5, 7];
-    $index = array_search(7, $array);
-    unset($array[$index]);
-    $array = array_values($array);
-    return response()->json($array);
-});

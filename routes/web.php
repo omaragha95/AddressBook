@@ -11,10 +11,26 @@
 |
 */
 
+use Illuminate\Http\Request;
 
-Route::get('/', function () {
-    return view('index');
-});
+
+// Route::get('/', function () {
+//     return view('index');
+//     // return view('image');
+// });
+
+// Route::post('/upload', function(Request $request) {
+//     if ($request->hasfile('image')) {
+//         foreach($request->file('image') as $image) {
+//             $date = now()->toArray()['timestamp'];
+//             $fileName = $image->getClientOriginalName() . '_' . $date;
+//             $image->move(public_path('uploads'),$fileName);
+//         }
+//         return redirect()->back();
+//     }    
+// });
+
+
 // Route::get('/', function () {
 //     return view('welcome');
 // });
